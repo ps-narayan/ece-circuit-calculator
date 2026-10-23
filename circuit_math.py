@@ -1,5 +1,4 @@
 """Core calculations for the ECE Circuit Calculator."""
-
 from __future__ import annotations
 
 import math
@@ -7,8 +6,11 @@ from collections.abc import Iterable
 
 
 def _positive(value: float, name: str) -> float:
-    """Return a finite positive value, or explain what needs correcting."""
-    number = float(value)
+    """Convert an input to a positive, finite circuit value."""
+    try:
+        number = float(value)
+    except (TypeError, ValueError) as error:
+        raise ValueError(f"{name} must be a number.") from error
     if not math.isfinite(number) or number <= 0:
         raise ValueError(f"{name} must be a finite number greater than zero.")
     return number
@@ -17,7 +19,7 @@ def _positive(value: float, name: str) -> float:
 def solve_ohms_law(
     *, voltage: float | None = None, current: float | None = None, resistance: float | None = None
 ) -> dict[str, float]:
-    """Calculate the missing Ohm's-law value and power from any two inputs."""
+    """Use two known values to find the third and the circuit's power."""
     values = {"voltage": voltage, "current": current, "resistance": resistance}
     supplied = {key: _positive(value, key) for key, value in values.items() if value is not None}
     if len(supplied) != 2:
@@ -52,18 +54,18 @@ def _resistor_values(values: Iterable[float]) -> list[float]:
 
 
 def resistance_series(values: Iterable[float]) -> float:
-    """Return total resistance for resistors connected in series."""
+    """Add the resistor values for a series connection."""
     return sum(_resistor_values(values))
 
 
 def resistance_parallel(values: Iterable[float]) -> float:
-    """Return total resistance for resistors connected in parallel."""
+    """Find the equivalent resistance for a parallel connection."""
     resistors = _resistor_values(values)
     return 1.0 / sum(1.0 / resistance for resistance in resistors)
 
 
 def voltage_divider(input_voltage: float, top_resistance: float, bottom_resistance: float) -> float:
-    """Return the unloaded output voltage across the bottom resistor."""
+    """Calculate the output across the lower resistor, with no load attached."""
     vin = _positive(input_voltage, "Input voltage")
     r_top = _positive(top_resistance, "Top resistance")
     r_bottom = _positive(bottom_resistance, "Bottom resistance")
@@ -71,7 +73,7 @@ def voltage_divider(input_voltage: float, top_resistance: float, bottom_resistan
 
 
 def led_series_resistor(supply_voltage: float, led_drop: float, current_ma: float) -> tuple[float, float]:
-    """Return the ideal resistor value in ohms and its estimated power in watts."""
+    """Estimate the series resistor and its power for one LED."""
     supply = _positive(supply_voltage, "Supply voltage")
     forward = _positive(led_drop, "LED forward voltage")
     milliamps = _positive(current_ma, "LED current")
