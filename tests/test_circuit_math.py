@@ -36,6 +36,7 @@ class CircuitMathTests(unittest.TestCase):
     def test_invalid_inputs_are_rejected(self):
         for operation in (
             lambda: resistance_series([]),
+            lambda: resistance_series([None]),
             lambda: resistance_parallel([100, 0]),
             lambda: solve_ohms_law(voltage=math.inf, current=1),
             lambda: voltage_divider(5, -1, 100),
